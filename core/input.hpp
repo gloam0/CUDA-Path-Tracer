@@ -5,12 +5,11 @@
 
 #include "camera.cuh"
 #include "common.hpp"
-#include "cuda_utils.cuh"
 #include "timer.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 struct input_state {
-    bool freeze;
+    bool free_mode;
 };
 
 __constant__ static input_state d_input_state;

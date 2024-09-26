@@ -4,10 +4,8 @@
 #include <iostream>
 
 #include <cuda_gl_interop.h>
-#include <curand.h>
 #include <curand_kernel.h>
 #include <cuda_runtime.h>
-
 
 #include "common.hpp"
 #include "cuda_utils.cuh"

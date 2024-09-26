@@ -10,6 +10,7 @@
 #include <cuda_gl_interop.h>
 
 #include "common.hpp"
+#include "cuda_utils.cuh"
 
 #include "logger.hpp"
 #include "timer.hpp"

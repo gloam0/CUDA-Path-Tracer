@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <cuda_runtime.h>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Type aliases and primitives
 using color3 = float3;
@@ -56,11 +54,9 @@ namespace view {
 // Rendering constants
 namespace render {
     /* configurable */
-    constexpr int       max_scatter_depth =     12;
+    constexpr int       max_scatter_depth =     40;
     constexpr int       vsync =                 0;
     constexpr float     self_intersect_eps =    1e-3;
-
-    __device__ constexpr color3 background_color = color3{0.7f, 0.9f, 1.f};
 
     /* derived */
     constexpr float     self_intersect_eps_sq = self_intersect_eps * self_intersect_eps;
@@ -69,7 +65,7 @@ namespace render {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Input/state constants
 namespace state {
-    constexpr bool init_freeze = false;
+    constexpr bool free_mode = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

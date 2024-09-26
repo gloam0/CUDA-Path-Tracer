@@ -1,7 +1,6 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include <GL/glew.h>
 #include <cuda_runtime.h>
 
 #include "scene.hpp"

@@ -1,11 +1,12 @@
 #include "input.hpp"
 
+#include "cuda_utils.cuh"
 #include "camera.cuh"
 
 namespace InputHandler {
     void init(GLFWwindow* window, Camera* cam) {
         // Initialize state
-        h_input_state.freeze = state::init_freeze;
+        h_input_state.free_mode = state::free_mode;
         mouse_captured = true;
         camera = cam;
 
@@ -36,7 +37,7 @@ namespace InputHandler {
         if (action == GLFW_PRESS) {
             switch (key) {
                 case GLFW_KEY_SPACE:
-                    h_input_state.freeze = !h_input_state.freeze;
+                    h_input_state.free_mode = !h_input_state.free_mode;
                 break;
                 case GLFW_KEY_M:
                     if (mouse_captured) {

@@ -4,8 +4,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <cuda_runtime.h>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void glfw_error_callback(int error, const char* description);
 void initialize_GLFW(GLFWwindow** window);
