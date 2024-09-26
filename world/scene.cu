@@ -1,9 +1,8 @@
 #include "scene.hpp"
 
+#include "cuda_utils.cuh"
 #include "material.cuh"
 
-#include "common.cuh"
-#include "cuda_utils.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 scene* create_scene() {

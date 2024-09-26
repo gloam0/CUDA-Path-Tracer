@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <cuda_runtime.h>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Type aliases and primitives
 using color3 = float3;
@@ -13,6 +11,13 @@ struct ray3 {
     point3  origin;
     vec3    direction;
 };
+
+struct input_state {
+    bool free_mode = true;
+    bool render_mode_first_frame = false;
+};
+
+inline input_state h_input_state;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Image/frame constants
@@ -56,11 +61,9 @@ namespace view {
 // Rendering constants
 namespace render {
     /* configurable */
-    constexpr int       max_scatter_depth =     12;
+    constexpr int       max_scatter_depth =     40;
     constexpr int       vsync =                 0;
     constexpr float     self_intersect_eps =    1e-3;
-
-    __device__ constexpr color3 background_color = color3{0.7f, 0.9f, 1.f};
 
     /* derived */
     constexpr float     self_intersect_eps_sq = self_intersect_eps * self_intersect_eps;
@@ -69,17 +72,14 @@ namespace render {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Input/state constants
 namespace state {
-    constexpr bool init_freeze = false;
+    constexpr bool free_mode = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Kernel constants
-constexpr int       ms_axis_length =    3;  /* sqrt of desired multisampling rate */
-constexpr int       multisampling_rate = ms_axis_length * ms_axis_length;
-constexpr dim3      block_size(8, 8, multisampling_rate);
+constexpr dim3      block_size(8, 8);
 constexpr dim3      grid_size((img::w + block_size.x - 1) / block_size.x,
-                              (img::h + block_size.y - 1) / block_size.y,
-                              (multisampling_rate + block_size.z - 1) / block_size.z);
+                              (img::h + block_size.y - 1) / block_size.y);
 constexpr size_t    num_threads = grid_size.x * grid_size.y * grid_size.z * block_size.x * block_size.y * block_size.z;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

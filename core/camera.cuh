@@ -1,8 +1,8 @@
 #ifndef CAMERA_CUH
 #define CAMERA_CUH
 
-#include "math_utils.cuh"
 #include "common.hpp"
+#include "math_utils.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 struct CameraParams {

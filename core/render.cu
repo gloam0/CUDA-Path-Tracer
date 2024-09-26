@@ -21,7 +21,7 @@ __global__ void init_curand(curandState *curand_state, unsigned long long seed) 
     curand_init(seed, idx, 0, &curand_state[idx]);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void render_frame(scene* d_scene, cudaGraphicsResource* pbo_resource, int frame_count) {
+void render_frame(scene* d_scene, cudaGraphicsResource* pbo_resource, int render_mode_frame_count) {
     /* Map the shared pbo to allow writing and get a pointer to it */
     uchar4* cuda_pbo;
     size_t num_bytes;
@@ -29,9 +29,7 @@ void render_frame(scene* d_scene, cudaGraphicsResource* pbo_resource, int frame_
     cudaGraphicsResourceGetMappedPointer((void**)&cuda_pbo, &num_bytes, pbo_resource);
 
     /* Render the current frame with multisampling and reduce multisamples */
-    render_scene<<<grid_size, block_size>>>(d_scene, frame_count);
-    CHECK_ERR(cudaGetLastError());
-    reduce_multisamples<<<grid_size, block_size>>>(cuda_pbo);
+    render_scene<<<grid_size, block_size>>>(cuda_pbo, d_scene, render_mode_frame_count);
     CHECK_ERR(cudaGetLastError());
 
     /* Unmap the shared pbo to finish writing and synchronize */
@@ -72,14 +70,13 @@ __global__ void check_borders(uchar4 *out) {
     }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
-__global__ void render_scene(scene* s, int frame_count) {
+__global__ void render_scene(uchar4* out, scene* s, int render_mode_frame_count) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
-    int k = blockIdx.z * blockDim.z + threadIdx.z;
 
-    if (i >= img::w || j >= img::h || k >= multisampling_rate) return;
+    if (i >= img::w || j >= img::h ) return;
 
-    int thread_index = (j * img::w * multisampling_rate) + (i * multisampling_rate) + k;
+    int thread_index = j * img::w + i;
     unsigned int seed = d_randoms[thread_index];
 
     /* Get a random subpixel in the pixel associated with this thread */
@@ -88,42 +85,39 @@ __global__ void render_scene(scene* s, int frame_count) {
 
     /* Trace this ray and write its resulting color to the multisampling buffer */
     float3 col = trace_ray(sub_x, sub_y, s, &seed);
-    d_ms_buffer[thread_index] = make_uchar3(
-        (unsigned char)(255.999 * col.x),
-        (unsigned char)(255.999 * col.y),
-        (unsigned char)(255.999 * col.z)
-    );
+
+    if (d_input_state.free_mode) {
+        /* Free mode: write frame directly to out buffer */
+        out[thread_index] = make_uchar4(
+            (unsigned char)(255.999f * gamma_correct(col.x)),
+            (unsigned char)(255.999f * gamma_correct(col.y)),
+            (unsigned char)(255.999f * gamma_correct(col.z)),
+            255
+        );
+    } else {
+        /* Render mode */
+        /* clear render_mode_buffer on first frame in render mode */
+        if (d_input_state.render_mode_first_frame) {
+            d_render_mode_buff[thread_index] = make_float4(0.f, 0.f, 0.f, 0.f);
+        }
+        /* Accumulate color */
+        d_render_mode_buff[thread_index] += make_float4(col.x, col.y, col.z, 255);
+        /* Write current color average to out buffer */
+        float inv_frame_count = 1.0f / render_mode_frame_count;
+        out[thread_index] = make_uchar4(
+            (unsigned char)(255.999f * gamma_correct(d_render_mode_buff[thread_index].x
+                                     * inv_frame_count)),
+            (unsigned char)(255.999f * gamma_correct(d_render_mode_buff[thread_index].y
+                                     * inv_frame_count)),
+            (unsigned char)(255.999f * gamma_correct(d_render_mode_buff[thread_index].z
+                                     * inv_frame_count)),
+            255
+        );
+    }
 
     /* Store random state */
     d_randoms[thread_index] = xorshift32_i(&seed);
 }
-////////////////////////////////////////////////////////////////////////////////////////////////
-__global__ void reduce_multisamples(uchar4* out) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.y * blockDim.y + threadIdx.y;
-    int k = blockIdx.z * blockDim.z + threadIdx.z;
-
-    if (i >= img::w || j >= img::h || k > 0) return;
-
-    /* Accumulate and average multisamples for pixel (i, j) */
-    auto thread_idx = j * img::w + i;
-    auto ms_buff_offs = multisampling_rate * thread_idx;
-    uint3 accum_color{0,0,0};
-    for (int c = 0; c < multisampling_rate; c++) {
-        uchar3 ms_color = d_ms_buffer[ms_buff_offs + c];
-        accum_color.x += ms_color.x;
-        accum_color.y += ms_color.y;
-        accum_color.z += ms_color.z;
-    }
-
-    out[thread_idx] = make_uchar4(
-        (unsigned char)(accum_color.x / multisampling_rate),
-        (unsigned char)(accum_color.y / multisampling_rate),
-        (unsigned char)(accum_color.z / multisampling_rate),
-        255
-    );
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __device__ color3 trace_ray(float vp_x, float vp_y, scene* s, unsigned int* seed) {
     ray3 r = make_ray(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */

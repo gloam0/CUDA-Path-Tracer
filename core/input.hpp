@@ -5,16 +5,8 @@
 
 #include "camera.cuh"
 #include "common.hpp"
-#include "cuda_utils.cuh"
 #include "timer.hpp"
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-struct input_state {
-    bool freeze;
-};
-
-__constant__ static input_state d_input_state;
-inline input_state h_input_state;
 ////////////////////////////////////////////////////////////////////////////////////////////////
 namespace InputHandler {
     inline bool mouse_captured;

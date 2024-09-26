@@ -10,6 +10,7 @@
 #include <cuda_gl_interop.h>
 
 #include "common.hpp"
+#include "cuda_utils.cuh"
 
 #include "logger.hpp"
 #include "timer.hpp"
@@ -51,11 +52,11 @@ int main() {
     cudaGraphicsResource* pbo_resource;
     get_pbo_tex(&pbo, &tex, &pbo_resource);
 
-    /* Allocate multisampling buffer */
-    init_multisampling_buffer();
-
     /* Pre-generate randoms */
     init_d_randoms();
+
+    /* Create buffer render mode color accumulation */
+    init_render_mode_buffer();
 
     /* Create camera */
     Camera camera;
@@ -79,10 +80,11 @@ int main() {
     ////////////////////////////////////////////////////////////////////////////////////////
     // Render
     int frame_count = 0;
+    int render_mode_frame_count = 1;
     timer.start_fps();
 
     while (!glfwWindowShouldClose(main_window)) {
-        render_frame(d_scene, pbo_resource, frame_count);
+        render_frame(d_scene, pbo_resource, render_mode_frame_count);
 
         if (frame_count % 400 == 0) {
             logger << Logger::get_local_time() << " FPS: " << timer.get_current_fps() << std::endl;
@@ -91,8 +93,16 @@ int main() {
         double frame_time = timer.get_frame_time();
         timer.frame_now();
         InputHandler::poll_and_handle_events(frame_time);
+
+        /* If render mode was entered this frame, reset the render mode frame counter */
+        if (h_input_state.render_mode_first_frame) {
+            render_mode_frame_count = 0;
+            h_input_state.render_mode_first_frame = false;
+        }
+
         camera.frame_now(frame_time);
         frame_count++;
+        render_mode_frame_count++;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////
