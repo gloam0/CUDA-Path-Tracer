@@ -12,6 +12,13 @@ struct ray3 {
     vec3    direction;
 };
 
+struct input_state {
+    bool free_mode = true;
+    bool render_mode_first_frame = false;
+};
+
+inline input_state h_input_state;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Image/frame constants
 namespace img {
@@ -70,12 +77,9 @@ namespace state {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Kernel constants
-constexpr int       ms_axis_length =    3;  /* sqrt of desired multisampling rate */
-constexpr int       multisampling_rate = ms_axis_length * ms_axis_length;
-constexpr dim3      block_size(8, 8, multisampling_rate);
+constexpr dim3      block_size(8, 8);
 constexpr dim3      grid_size((img::w + block_size.x - 1) / block_size.x,
-                              (img::h + block_size.y - 1) / block_size.y,
-                              (multisampling_rate + block_size.z - 1) / block_size.z);
+                              (img::h + block_size.y - 1) / block_size.y);
 constexpr size_t    num_threads = grid_size.x * grid_size.y * grid_size.z * block_size.x * block_size.y * block_size.z;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

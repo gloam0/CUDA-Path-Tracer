@@ -70,13 +70,13 @@ void get_pbo_tex(GLuint* pbo, GLuint* tex, cudaGraphicsResource** cuda_pbo) {
     /* Register the OpenGL pbo with CUDA as write-only */
     CHECK_ERR(cudaGraphicsGLRegisterBuffer(cuda_pbo, *pbo, cudaGraphicsMapFlagsWriteDiscard));
 }
-////////////////////////////////////////////////////////////////////////////////////////////////
-void init_multisampling_buffer() {
-    uchar3* tmp_ptr;
-    size_t d_ms_buff_size = img::w * img::h * multisampling_rate * sizeof(uchar3);
-    CHECK_ERR(cudaMalloc(&tmp_ptr, d_ms_buff_size));
-    CHECK_ERR(cudaMemcpyToSymbol(d_ms_buffer, &tmp_ptr, sizeof(uchar3*), 0, cudaMemcpyHostToDevice));
+
+void init_render_mode_buffer() {
+    float4* tmp_ptr;
+    CHECK_ERR(cudaMalloc(&tmp_ptr, img::w * img::h * sizeof(float4)));
+    CHECK_ERR(cudaMemcpyToSymbol(d_render_mode_buff, &tmp_ptr, sizeof(float4*), 0, cudaMemcpyHostToDevice));
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void init_d_randoms() {
     unsigned int* tmp_ptr;

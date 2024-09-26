@@ -38,6 +38,9 @@ namespace InputHandler {
             switch (key) {
                 case GLFW_KEY_SPACE:
                     h_input_state.free_mode = !h_input_state.free_mode;
+                    /* set flag, to be unset once render_frame_counter is reset in main */
+                    if (!h_input_state.free_mode)
+                        h_input_state.render_mode_first_frame = true;
                 break;
                 case GLFW_KEY_M:
                     if (mouse_captured) {
@@ -87,10 +90,12 @@ namespace InputHandler {
     }
 
     void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+        if (!h_input_state.free_mode) return;
         camera->scroll_zoom(float(yoffset) * view::scroll_sensitivity);
     }
 
     void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {
+        if (!h_input_state.free_mode) return;
         if (!mouse_captured) return;
         if (xpos == window_center.x && ypos == window_center.y) return;
 

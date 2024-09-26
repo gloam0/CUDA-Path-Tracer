@@ -37,6 +37,8 @@ void Camera::init() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::update() {
+    if (!h_input_state.free_mode) return;
+
     vec3 c_direction = rotate_v(view::init_camera_dir, h_camera_params.c_orientation);
     vec3 c_up = rotate_v(normalize(view::init_camera_up), h_camera_params.c_orientation);
     vec3 c_right = rotate_v(view::init_camera_right, h_camera_params.c_orientation);
@@ -59,6 +61,8 @@ void Camera::update() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::frame_now(double frame_time) {
+    if (!h_input_state.free_mode) return;
+
     double dt = frame_time / 1000000;
     /* Apply acceleration based on key states */
     if (wasd_state.W)
@@ -110,6 +114,8 @@ void Camera::frame_now(double frame_time) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::scroll_zoom(float d_focal_length) {
+    if (!h_input_state.free_mode) return;
+
     h_camera_params.focal_length += d_focal_length;
 
     h_camera_params.focal_length = h_camera_params.focal_length < view::min_focal_length ? view::min_focal_length : h_camera_params.focal_length;
@@ -117,6 +123,8 @@ void Camera::scroll_zoom(float d_focal_length) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::mouse_rotate(const float2& mouse_delta) {
+    if (!h_input_state.free_mode) return;
+
     /* Convert mouse movement to rotation angles */
     float delta_yaw = mouse_delta.x * view::look_sensitivity;
     float delta_pitch = mouse_delta.y * view::look_sensitivity;

@@ -62,6 +62,14 @@ __host__ __device__ __forceinline__ void operator/=(float3& a, const float b) {
     a.z /= b;
 }
 
+/* float 4 */
+__host__ __device__ __forceinline__ void operator+=(float4& a, const float4& b) {
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    a.w += b.w;
+}
+
 /* double3 */
 __host__ __device__ __forceinline__ double3 operator+(const double3& a, const double3& b) {
     return make_double3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -248,6 +256,11 @@ __device__ inline vec3 random_unit_vector(unsigned int* seed) {
 /// Determine if the length of vector v is less than a minimum threshold.
 __device__ inline bool near_zero(const vec3& v) {
     return dot(v, v) < render::self_intersect_eps_sq;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+__device__ inline float gamma_correct(float color) {
+    return powf(color, 1.0f / 2.2f);  /* sRGB gamma = 2.2 */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
