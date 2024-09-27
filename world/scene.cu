@@ -2,35 +2,35 @@
 
 #include "cuda_utils.cuh"
 #include "material.cuh"
-
+#include "predefined_materials.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 scene* create_scene() {
     scene* s = new scene;
-    s->num_objects = 10;
+    s->num_objects = 6;
     s->spheres = new sphere[s->num_objects]{
-        sphere{point3{0, -101, -6}, 100},
-        sphere{point3{2, 1, -4}, 0.2},
-        sphere{point3{-4, 0.2, -6}, 0.3},
-        sphere{point3{-2.3, 0.4, -6}, 0.1},
-        sphere{point3{5.4, 3.2, -6}, 0.14},
-        sphere{point3{0, 0, -3}, 1},
-        sphere{point3{1, 3, -12}, 2.1},
-        sphere{point3{-5.4, 6.2, -6}, 3.14},
-        sphere{point3{-3, 4, 6}, 1.5},
-        sphere{point3{-13, 4, -12}, 6.1}
+        sphere{point3{0, -1000, -6}, 1000},
+        sphere{point3{0, 2, -3}, 2},
+        sphere{point3{0, 2, -3}, 1.5},
+        sphere{point3{-4.1, 2, -3}, 2},
+        sphere{point3{-4.1, 2, -3}, 1.5},
+        sphere{point3{4.1, 2, -3}, 2}
     };
     s->materials = new material[s->num_objects] {
-        material{material_type::Diffuse, color3{0.4, 0.86, 0.97}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{0.5, 0.5, 0.8}},
-        material{material_type::Diffuse, color3{1, 0., 0.}}
+        material{material_type::Diffuse, color3{0.5f, 0.5f, 0.5f}},
+        predefined_materials::GLASS_BK7(),
+        material{material_type::Dielectric, color3{1.f,1.f,1.f},
+            mat_properties{
+                .dielectric = dielectric_params{
+                    .ior = 1.000278f / 1.5191f,
+                    .roughness = 0.f,
+                    .render_method = dielectric_render_method::SHLICK
+                }
+            }
+        },
+        predefined_materials::GLASS_BK7(),
+        predefined_materials::GOLD(color3{1.f,1.f,1.f}, 0.01f),
+        predefined_materials::GOLD(color3{1.f,1.f,1.f}, 0.01f)
     };
     return s;
 }

@@ -10,12 +10,19 @@
 // Constants
 constexpr double deg_to_rad = M_PI / 180.;
 
+__host__ __device__ __forceinline__ float clamp(float x, float a, float b){
+    return max(a, min(b, x));
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Operator overloads
 
 /* float3 */
 __host__ __device__ __forceinline__ float3 operator+(const float3& a, const float3& b) {
     return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+__host__ __device__ __forceinline__ float3 operator+(const float3& a, float b) {
+    return make_float3(a.x + b, a.y + b, a.z + b);
 }
 
 __host__ __device__ __forceinline__ float3 operator-(const float3& a) {
@@ -154,6 +161,22 @@ __host__ __device__ __forceinline__ float3 elem_product(const float3& a, const f
     return {a.x * b.x, a.y * b.y, a.z * b.z};
 }
 
+__host__ __device__ __forceinline__  float3 elem_divide(const float3& a, const float3& b) {
+    return make_float3(a.x / b.x, a.y / b.y, a.z / b.z);
+}
+
+__host__ __device__ __forceinline__  float3 elem_square(const float3& a) {
+    return elem_product(a, a);
+}
+
+__host__ __device__ __forceinline__  float3 elem_sqrt(const float3& a) {
+    return make_float3(sqrtf(a.x), sqrtf(a.y), sqrtf(a.z));
+}
+
+__host__ __device__ __forceinline__  float3 elem_clamp(const float3& a, float b, float c) {
+    return make_float3(clamp(a.x, b, c), clamp(a.y, b, c), clamp(a.z, b, c));
+}
+
 __host__ __device__ __forceinline__ float3 normalize(const vec3& a) {
 #ifdef __CUDA_ARCH__
     return a * rsqrtf(dot(a, a));
@@ -260,8 +283,28 @@ __device__ inline bool near_zero(const vec3& v) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __device__ inline float gamma_correct(float color) {
-    return powf(color, 1.0f / 2.2f);  /* sRGB gamma = 2.2 */
+    return powf(color, 1.0f / 2.2f);  /* sRGB gamma = 2.2, https://en.wikipedia.org/wiki/SRGB */
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+/// Derive cos(theta) of the angle theta between an incident and normal vector, which are
+/// both unit vectors. Clamped to 1.
+__device__ inline float cos_theta_from_incident_and_normal(const vec3& incident, const vec3& normal) {
+    /* -v . n = |-v||n|cos(theta) = (1)(1)cos(theta) */
+    return fminf(dot(-incident, normal), 1.f);
 }
 
+/// Return the reflection of vector v about normal n.
+__device__ inline vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2.f * dot(v, n) * n;
+}
+
+/// Return the refraction of v about n with index of refraction ratio eta_i / eta_t.
+__device__ inline vec3 refract(const vec3& v, const vec3& n, float etai_over_etat) {
+    float cos_theta = cos_theta_from_incident_and_normal(v, n);
+    vec3 r_out_perp = etai_over_etat * (v + cos_theta * n);
+    float discriminant = 1.0f - dot(r_out_perp, r_out_perp);
+    vec3 r_out_parallel = discriminant > 0.0f ? -sqrtf(discriminant) * n : vec3{0,0,0};
+    return r_out_perp + r_out_parallel;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #endif //MATH_UTILS_H

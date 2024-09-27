@@ -61,7 +61,8 @@ public:
         hit_info.t = t0;
         hit_info.loc = hit_pt;
         /*-------------------------------- normal ------------------------------------*/
-        hit_info.normal = (hit_pt - center) / radius;
+        vec3 outward_normal = (hit_info.loc - center) / radius;
+        hit_info.set_face_normal(ray, outward_normal);
         return true;
     }
 

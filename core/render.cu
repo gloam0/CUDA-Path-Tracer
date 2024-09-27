@@ -121,7 +121,7 @@ __global__ void render_scene(uchar4* out, scene* s, int render_mode_frame_count)
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __device__ color3 trace_ray(float vp_x, float vp_y, scene* s, unsigned int* seed) {
     ray3 r = make_ray(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */
-    color3 att = color3{1.f,1.f,1.f};   /* Attenuation */
+    color3 curr_attenuation = color3{1.f,1.f,1.f};   /* Attenuation */
 
     hit best_hit;
     float best_t;
@@ -138,14 +138,16 @@ __device__ color3 trace_ray(float vp_x, float vp_y, scene* s, unsigned int* seed
                 }
             }
         }
-        if (best_t > 0.f) { /* scatter r and apply attenuation */
-            scatter(&r,&best_hit, best_hit.mat, seed);
-            att = elem_product(att, best_hit.mat->albedo);
-        } else {            /* No hit, use background color and exit */
-            return elem_product(att, render::background_color);
+        if (best_t > 0.f) {
+            /* scatter r and apply attenuation */
+            curr_attenuation = elem_product(curr_attenuation,
+                                            scatter(&r,&best_hit, best_hit.mat, seed));
+        } else {
+            /* No hit, use background color and exit */
+            return elem_product(curr_attenuation, render::background_color);
         }
         depth++;
     } while (depth < render::max_scatter_depth);
 
-    return att;
+    return curr_attenuation;
 }

@@ -1,17 +1,28 @@
 #ifndef MATERIAL_CUH
 #define MATERIAL_CUH
 
-#include "diffuse.cuh"
 #include "common.hpp"
 #include "hit.cuh"
 
+#include "diffuse.cuh"
+#include "conductor.cuh"
+#include "dielectric.cuh"
+
 enum class material_type {
-    Diffuse
+    Diffuse,
+    Conductor,
+    Dielectric
+};
+
+union mat_properties {
+    conductor_params conductor;
+    dielectric_params dielectric;
 };
 
 struct material {
     material_type type;
     color3 albedo;
+    mat_properties props;
 };
 
 /// Calls the appropriate scatter() function for the given material type.
@@ -23,10 +34,16 @@ __device__ inline color3 scatter(ray3* r, const hit* h, const material* mat, uns
     switch (mat->type) {
         default:
         case material_type::Diffuse:
-            scatter_diffuse(r, h, seed);
-            break;
+            return elem_product(mat->albedo, scatter_diffuse(r, h, seed));
+        case material_type::Conductor:
+            return elem_product(mat->albedo, scatter_conductor(r, h, &mat->props.conductor, seed));
+        case material_type::Dielectric:
+            if (mat->props.dielectric.render_method == dielectric_render_method::SHLICK) {
+                return elem_product(mat->albedo, scatter_dielectric_shlick(r, h, &mat->props.dielectric, seed));
+            } else {
+                return elem_product(mat->albedo, scatter_dielectric_fresnel(r, h, &mat->props.dielectric, seed));
+            }
     }
-    return mat->albedo;
 }
 
 #endif //MATERIAL_CUH
