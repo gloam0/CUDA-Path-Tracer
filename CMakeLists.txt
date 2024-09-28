@@ -17,6 +17,7 @@ add_subdirectory(core)
 add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(world)
+add_subdirectory(exr)
 
 add_executable(GPURayTracer main.cu)
 
@@ -30,6 +31,7 @@ target_link_libraries(GPURayTracer
             ${OPENGL_LIBRARIES}
             glfw
             GLEW::GLEW
+            hdr
 )
 
 target_include_directories(GPURayTracer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

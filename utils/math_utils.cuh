@@ -282,8 +282,23 @@ __device__ inline bool near_zero(const vec3& v) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+/* sRGB gamma = 2.2, https://en.wikipedia.org/wiki/SRGB */
+__constant__ inline float inv_gamma = 1.f / 2.2f;
+
 __device__ inline float gamma_correct(float color) {
-    return powf(color, 1.0f / 2.2f);  /* sRGB gamma = 2.2, https://en.wikipedia.org/wiki/SRGB */
+    return powf(color, inv_gamma);
+}
+
+__device__ inline float3 gamma_correct(float3 color) {
+    return make_float3(powf(color.x, inv_gamma),
+                       powf(color.y, inv_gamma),
+                       powf(color.z, inv_gamma));
+}
+
+__device__ inline color3 reinhard_tone_map(const color3& color) {
+    return make_float3(color.x / (1.0f + color.x),
+                       color.y / (1.0f + color.y),
+                       color.z / (1.0f + color.z));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Derive cos(theta) of the angle theta between an incident and normal vector, which are

@@ -20,4 +20,5 @@ target_link_libraries(core
         PUBLIC
             world
             curand
+            hdr
 )

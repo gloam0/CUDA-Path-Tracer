@@ -61,9 +61,10 @@ namespace view {
 // Rendering constants
 namespace render {
     /* configurable */
-    constexpr int       max_scatter_depth =     40;
+    constexpr int       max_scatter_depth =     100;
     constexpr int       vsync =                 0;
     constexpr float     self_intersect_eps =    1e-3;
+    inline    bool      use_hdr =               true;
 
     /* derived */
     constexpr float     self_intersect_eps_sq = self_intersect_eps * self_intersect_eps;

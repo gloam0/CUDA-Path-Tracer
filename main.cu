@@ -2,6 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include <thread>
+#include <atomic>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,6 +12,7 @@
 
 #include "common.hpp"
 #include "cuda_utils.cuh"
+#include "exr_utils.cuh"
 
 #include "logger.hpp"
 #include "timer.hpp"
@@ -62,6 +64,16 @@ int main() {
     Camera camera;
     camera.init();
 
+    /* Load EXR environment map */
+    hdr_map map;
+    bool success;
+    if (render::use_hdr) {
+        create_env_map_threaded(exr_paths::indoor_1, &map, &success);
+        /* prevent the window from being detected as unresponsive */
+        while (!env_map_loaded) glfwPollEvents();
+        if (!success) logger << "HDR load failed, using render::background_color" << std::endl;
+    }
+
     /* Create and setup input handler */
     InputHandler::init(main_window, &camera);
     InputHandler::register_callbacks(main_window);
@@ -84,7 +96,7 @@ int main() {
     timer.start_fps();
 
     while (!glfwWindowShouldClose(main_window)) {
-        render_frame(d_scene, pbo_resource, render_mode_frame_count);
+        render_frame(d_scene, pbo_resource, map.tex_obj, render_mode_frame_count);
 
         if (frame_count % 400 == 0) {
             logger << Logger::get_local_time() << " FPS: " << timer.get_current_fps() << std::endl;

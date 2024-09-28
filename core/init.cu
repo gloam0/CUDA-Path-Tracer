@@ -88,3 +88,4 @@ void init_d_randoms() {
     CHECK_ERR(cudaMemcpyToSymbol(d_randoms, &tmp_ptr, sizeof(unsigned int*), 0, cudaMemcpyHostToDevice));
     CHECK_ERR(curandDestroyGenerator(curand_gen));
 }
+////////////////////////////////////////////////////////////////////////////////////////////////

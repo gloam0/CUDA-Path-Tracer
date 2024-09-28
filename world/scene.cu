@@ -7,14 +7,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 scene* create_scene() {
     scene* s = new scene;
-    s->num_objects = 6;
+    s->num_objects = 7;
     s->spheres = new sphere[s->num_objects]{
         sphere{point3{0, -1000, -6}, 1000},
         sphere{point3{0, 2, -3}, 2},
         sphere{point3{0, 2, -3}, 1.5},
         sphere{point3{-4.1, 2, -3}, 2},
         sphere{point3{-4.1, 2, -3}, 1.5},
-        sphere{point3{4.1, 2, -3}, 2}
+        sphere{point3{4.1, 2, -3}, 2},
+        sphere{point3{0, 5, -3}, 2}
     };
     s->materials = new material[s->num_objects] {
         material{material_type::Diffuse, color3{0.5f, 0.5f, 0.5f}},
@@ -30,7 +31,8 @@ scene* create_scene() {
         },
         predefined_materials::GLASS_BK7(),
         predefined_materials::GOLD(color3{1.f,1.f,1.f}, 0.01f),
-        predefined_materials::GOLD(color3{1.f,1.f,1.f}, 0.01f)
+        predefined_materials::GOLD(color3{1.f,1.f,1.f}, 0.01f),
+        material{material_type::Diffuse, color3{1., 0.1f, 0.14f}}
     };
     return s;
 }
