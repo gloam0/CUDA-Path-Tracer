@@ -54,6 +54,9 @@ namespace InputHandler {
                     }
                     mouse_captured = !mouse_captured;
                 break;
+                case GLFW_KEY_P:
+                    h_input_state.save_this_frame = true;
+                break;
                 case GLFW_KEY_W:
                     Camera::wasd_state.W = true;
                 break;

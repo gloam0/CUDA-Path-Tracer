@@ -9,6 +9,7 @@
 #include "camera.cuh"
 #include "hit.cuh"
 #include "material.cuh"
+#include "frame_to_image.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __global__ void init_curand(curandState *curand_state, unsigned long long seed) {
@@ -27,6 +28,8 @@ void render_frame(
         cudaTextureObject_t env_tex,
         int render_mode_frame_count)
 {
+    static int img_count = 0;
+
     /* Map the shared pbo to allow writing and get a pointer to it */
     uchar4* cuda_pbo;
     size_t num_bytes;
@@ -36,6 +39,11 @@ void render_frame(
     /* Render the current frame with multisampling and reduce multisamples */
     render_scene<<<grid_size, block_size>>>(cuda_pbo, d_scene, env_tex, render_mode_frame_count);
     CHECK_ERR(cudaGetLastError());
+
+    if (h_input_state.save_this_frame) {
+        save_frame_as_image(cuda_pbo, 100, ("./frame" + std::to_string(img_count++) + ".jpg").c_str());
+        h_input_state.save_this_frame = false;
+    }
 
     /* Unmap the shared pbo to finish writing and synchronize */
     cudaGraphicsUnmapResources(1, &pbo_resource, 0);

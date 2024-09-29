@@ -15,6 +15,7 @@ struct ray3 {
 struct input_state {
     bool free_mode = true;
     bool render_mode_first_frame = false;
+    bool save_this_frame = false;
 };
 
 inline input_state h_input_state;
@@ -61,7 +62,7 @@ namespace view {
 // Rendering constants
 namespace render {
     /* configurable */
-    constexpr int       max_scatter_depth =     100;
+    constexpr int       max_scatter_depth =     30;
     constexpr int       vsync =                 0;
     constexpr float     self_intersect_eps =    1e-3;
     inline    bool      use_hdr =               true;
