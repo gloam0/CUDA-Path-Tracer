@@ -1,14 +1,17 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "sphere.cuh"
+#include "geometry.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// A struct representing the objects in a scene.
 struct scene {
     sphere*     spheres;
-    int         num_objects;
-    material*   materials;
+    plane*      planes;
+    material*   sphere_materials;
+    material*   plane_materials;
+    int         num_spheres;
+    int         num_planes;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Initialize the camera and create scene objects.
