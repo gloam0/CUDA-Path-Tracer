@@ -42,7 +42,7 @@ namespace view {
     constexpr vec3      init_camera_dir =       vec3{0, 0, -1}; /* these vecs should be normalized */
     constexpr vec3      init_camera_up =        vec3{0, 1, 0};
     constexpr vec3      init_camera_right =     vec3{1, 0, 0};
-    constexpr float     look_sensitivity =      0.1;
+    constexpr float     look_sensitivity =      0.002;
 
     constexpr float     move_accel_scale =      10.;  /* du/s */
     constexpr float     move_decel_scale =      5.;   /* du/s */

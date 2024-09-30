@@ -26,10 +26,7 @@ void Camera::init() {
     h_camera_params.c_dlat = 0.f;
     h_camera_params.c_dlong = 0.f;
 
-    quaternion yaw_rotation = make_rotor_quaternion(view::init_camera_up, h_camera_params.c_yaw * deg_to_rad);
-    quaternion pitch_rotation = make_rotor_quaternion(view::init_camera_right, h_camera_params.c_pitch * deg_to_rad);
-    h_camera_params.c_orientation = yaw_rotation * pitch_rotation;
-    h_camera_params.c_orientation = normalize(h_camera_params.c_orientation);
+    h_camera_params.c_orientation = quaternion{1.f, 0.f, 0.f, 0.f};
 
     h_camera_params.focal_length = view::init_focal_length;
 
@@ -63,24 +60,23 @@ void Camera::update() {
 void Camera::frame_now(double frame_time) {
     if (!h_input_state.free_mode) return;
 
-    double dt = frame_time / 1000000;
+    float dt = static_cast<float>(frame_time) / 1000000.0f;
+    float accel = (view::move_accel_scale + view::move_decel_scale) * dt;
+    float decel = view::move_decel_scale * dt;
+
     /* Apply acceleration based on key states */
     if (wasd_state.W)
-        h_camera_params.c_dlong += (view::move_accel_scale + view::move_decel_scale) * dt;
-
+        h_camera_params.c_dlong += accel;
     if (wasd_state.S)
-        h_camera_params.c_dlong -= (view::move_accel_scale + view::move_decel_scale) * dt;
-
+        h_camera_params.c_dlong -= accel;
     if (wasd_state.A)
-        h_camera_params.c_dlat -= (view::move_accel_scale + view::move_decel_scale) * dt;
-
+        h_camera_params.c_dlat -= accel;
     if (wasd_state.D)
-        h_camera_params.c_dlat += (view::move_accel_scale + view::move_decel_scale) * dt;
-
+        h_camera_params.c_dlat += accel;
 
     /* Apply deceleration when keys are not pressed */
     if (h_camera_params.c_dlong > 0.f) {
-        h_camera_params.c_dlong -= view::move_decel_scale * dt;
+        h_camera_params.c_dlong -= decel;
         if (h_camera_params.c_dlong < 0.f) h_camera_params.c_dlong = 0.f;
     } else if (h_camera_params.c_dlong < 0.f) {
         h_camera_params.c_dlong += view::move_decel_scale * dt;
@@ -88,24 +84,19 @@ void Camera::frame_now(double frame_time) {
     }
 
     if (h_camera_params.c_dlat > 0.f) {
-        h_camera_params.c_dlat -= view::move_decel_scale * dt;
+        h_camera_params.c_dlat -= decel;
         if (h_camera_params.c_dlat < 0.f) h_camera_params.c_dlat = 0.f;
     } else if (h_camera_params.c_dlat < 0.f) {
-        h_camera_params.c_dlat += view::move_decel_scale * dt;
+        h_camera_params.c_dlat += decel;
         if (h_camera_params.c_dlat > 0.f) h_camera_params.c_dlat = 0.f;
     }
 
-    if (h_camera_params.c_dlong > view::max_velocity) h_camera_params.c_dlong = view::max_velocity;
-    if (h_camera_params.c_dlong < -view::max_velocity) h_camera_params.c_dlong = -view::max_velocity;
-
-    if (h_camera_params.c_dlat > view::max_velocity) h_camera_params.c_dlat = view::max_velocity;
-    if (h_camera_params.c_dlat < -view::max_velocity) h_camera_params.c_dlat = -view::max_velocity;
+    h_camera_params.c_dlong = clamp(h_camera_params.c_dlong, -view::max_velocity, view::max_velocity);
+    h_camera_params.c_dlat = clamp(h_camera_params.c_dlat, -view::max_velocity, view::max_velocity);
 
     /* Update position based on velocity and delta time */
-    vec3 c_forward = normalize(h_camera_params.c_direction);
+    vec3 c_forward = h_camera_params.c_direction;
     vec3 c_right = normalize(rotate_v(view::init_camera_right, h_camera_params.c_orientation));
-
-    /* Update position based on velocity and delta time */
     h_camera_params.c_location +=
         c_forward * float(h_camera_params.c_dlong * dt) +
         c_right * float(h_camera_params.c_dlat * dt);
@@ -117,9 +108,9 @@ void Camera::scroll_zoom(float d_focal_length) {
     if (!h_input_state.free_mode) return;
 
     h_camera_params.focal_length += d_focal_length;
-
-    h_camera_params.focal_length = h_camera_params.focal_length < view::min_focal_length ? view::min_focal_length : h_camera_params.focal_length;
-    h_camera_params.focal_length = h_camera_params.focal_length > view::max_focal_length ? view::max_focal_length : h_camera_params.focal_length;
+    h_camera_params.focal_length = clamp(h_camera_params.focal_length,
+                                         view::min_focal_length,
+                                         view::max_focal_length);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::mouse_rotate(const float2& mouse_delta) {
@@ -132,12 +123,12 @@ void Camera::mouse_rotate(const float2& mouse_delta) {
     h_camera_params.c_yaw += delta_yaw;
     h_camera_params.c_pitch += delta_pitch;
 
-    /* Create rotation quaternions for yaw and pitch rotations */
-    quaternion yaw_rotation = make_rotor_quaternion(view::init_camera_up, h_camera_params.c_yaw * deg_to_rad);
-    quaternion pitch_rotation = make_rotor_quaternion(view::init_camera_right, h_camera_params.c_pitch * deg_to_rad);
+    /* Create rotor quaternions for yaw and pitch rotations */
+    quaternion yaw_rotation = make_rotor_quaternion(view::init_camera_up, h_camera_params.c_yaw);
+    quaternion pitch_rotation = make_rotor_quaternion(view::init_camera_right, h_camera_params.c_pitch);
 
     /* Combine rotations */
-    h_camera_params.c_orientation = normalize(yaw_rotation * pitch_rotation);
+    h_camera_params.c_orientation = yaw_rotation * pitch_rotation;
 
     /* Call update to recalculate other parameters */
     update();

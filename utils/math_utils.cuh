@@ -8,8 +8,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Constants
-constexpr double deg_to_rad = M_PI / 180.;
-
 __host__ __device__ __forceinline__ float clamp(float x, float a, float b){
     return max(a, min(b, x));
 }
