@@ -6,15 +6,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// A struct representing the objects in a scene.
 struct scene {
-    sphere*     spheres;
-    plane*      planes;
-    material*   sphere_materials;
-    material*   plane_materials;
-    int         num_spheres;
-    int         num_planes;
+    geometries      geoms;
+    geometries_info geoms_info;
+    material*       sphere_materials;
+    material*       plane_materials;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize the camera and create scene objects.
+/// Create a scene and its objects.
 /// @return The allocated and initialized struct scene.
 scene* create_scene();
 
