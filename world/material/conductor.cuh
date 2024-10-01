@@ -6,6 +6,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 struct conductor_params {
+    color3 albedo;
     color3 eta;         /* re part of complex refractive index for each sRGB channel */
     color3 k;           /* im part of complex refractive index for each sRGB channel */
     float roughness;    /* surface roughness [0.0, 1.0] */
@@ -54,14 +55,14 @@ __device__ inline float3 fresnel_conductor(float cos_theta, const float3 &eta, c
 }
 
 /// Material-specific scatter function for a conductor material.
-__device__ inline color3 scatter_conductor(ray3* r, const hit* h, const conductor_params* params, unsigned int* seed) {
+__device__ inline color3 scatter_conductor(ray3* r, const hit* h, const conductor_params& params, unsigned int* seed) {
     vec3 incident = r->direction;
     vec3 normal = h->normal;
 
     /* Apply roughness */
-    if (params->roughness > 0.0f) {
+    if (params.roughness > 0.0f) {
         vec3 random_vector = random_unit_vector(seed);
-        normal = normalize(normal + params->roughness * random_vector);
+        normal = normalize(normal + params.roughness * random_vector);
     }
 
     /* Reflect incident ray about the normal */
@@ -72,7 +73,7 @@ __device__ inline color3 scatter_conductor(ray3* r, const hit* h, const conducto
     float cos_theta =  cos_theta_from_incident_and_normal(incident, normal);
 
     /* Return fresnel reflectance as attenuation */
-    return fresnel_conductor(cos_theta, params->eta, params->k);
+    return elem_product(params.albedo, fresnel_conductor(cos_theta, params.eta, params.k));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 

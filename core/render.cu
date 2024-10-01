@@ -162,20 +162,12 @@ __device__ color3 trace_ray(
     int depth = 0;
     do {  /* check scene objects for intersection, track nearest hit */
         best_t = -1.f;
-        for (int idx = 0; idx < s->num_spheres; idx++){
-            if (s->spheres[idx].is_hit(r, this_hit)) {
-                if (this_hit.t < best_t || best_t < 0) {
+        for (int idx = 0; idx < s->geoms_info.num_instances; idx++) {
+            geometry_instance g = s->geoms_info.instances[idx];
+            if (is_hit_dispatch(r, this_hit, g, s->geoms)) {
+                if (this_hit.t < best_t || best_t < 0.f) {
                     best_hit = this_hit;
-                    best_hit.mat = &s->sphere_materials[idx];
-                    best_t = this_hit.t;
-                }
-            }
-        }
-        for (int idx = 0; idx < s->num_planes; idx++){
-            if (s->planes[idx].is_hit(r, this_hit)) {
-                if (this_hit.t < best_t || best_t < 0) {
-                    best_hit = this_hit;
-                    best_hit.mat = &s->plane_materials[idx];
+                    best_hit.mat_id = s->geoms_info.instances[idx].material_id;
                     best_t = this_hit.t;
                 }
             }
@@ -183,7 +175,7 @@ __device__ color3 trace_ray(
         if (best_t > 0.f) {
             /* scatter r and apply attenuation */
             curr_attenuation = elem_product(curr_attenuation,
-                                            scatter(&r,&best_hit, best_hit.mat, seed));
+                                            scatter(&r, &best_hit, s->mats_info.instances[best_hit.mat_id], s->mats, seed));
         } else {
             /* No hit, sample HDR or use background color and exit */
             if (!d_use_hdr) return elem_product(curr_attenuation, render::background_color);

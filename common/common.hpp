@@ -64,7 +64,7 @@ namespace render {
     /* configurable */
     constexpr int       max_scatter_depth =     30;
     constexpr int       vsync =                 0;
-    constexpr float     self_intersect_eps =    1e-3;
+    constexpr float     self_intersect_eps =    1e-4;
     inline    bool      use_hdr =               true;
 
     /* derived */
