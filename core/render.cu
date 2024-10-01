@@ -167,11 +167,7 @@ __device__ color3 trace_ray(
             if (is_hit_dispatch(r, this_hit, g, s->geoms)) {
                 if (this_hit.t < best_t || best_t < 0.f) {
                     best_hit = this_hit;
-                    if (g.type == geometry_type::SPHERE) {
-                        best_hit.mat = &s->sphere_materials[g.i];
-                    } else {
-                        best_hit.mat = &s->plane_materials[g.i];
-                    }
+                    best_hit.mat_id = s->geoms_info.instances[idx].material_id;
                     best_t = this_hit.t;
                 }
             }
@@ -179,7 +175,7 @@ __device__ color3 trace_ray(
         if (best_t > 0.f) {
             /* scatter r and apply attenuation */
             curr_attenuation = elem_product(curr_attenuation,
-                                            scatter(&r,&best_hit, best_hit.mat, seed));
+                                            scatter(&r, &best_hit, s->mats_info.instances[best_hit.mat_id], s->mats, seed));
         } else {
             /* No hit, sample HDR or use background color and exit */
             if (!d_use_hdr) return elem_product(curr_attenuation, render::background_color);

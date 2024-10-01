@@ -15,6 +15,7 @@ enum class geometry_type {
 struct geometry_instance {
     geometry_type type;  /* type of this geometry instance */
     int i;               /* index of this instance in the associated geometry-specific SoA */
+    int material_id;     /* index of this geometry's material in an associated unified array of materials_instance */
 };
 
 /// Describe a struct geometries
@@ -27,8 +28,8 @@ struct geometries_info {
 
 /// Collection of geometries of various types
 struct geometries {
-    sphere_params_soa spheres;     /* params of each sphere geometry */
-    plane_params_soa planes;       /* params of each plane geometry */
+    sphere_params_soa spheres;
+    plane_params_soa planes;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

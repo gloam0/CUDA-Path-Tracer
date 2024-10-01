@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "material.cuh"
 #include "geometry.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8,9 +9,10 @@
 struct scene {
     geometries      geoms;
     geometries_info geoms_info;
-    material*       sphere_materials;
-    material*       plane_materials;
+    materials       mats;
+    materials_info  mats_info;
 };
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a scene and its objects.
 /// @return The allocated and initialized struct scene.
