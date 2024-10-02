@@ -12,8 +12,9 @@ enum class dielectric_render_method {
 
 struct dielectric_params {
     color3 albedo;
-    float ior;         /* index of refraction */
-    float roughness;   /* surface roughness [0.0, 1.0] */
+    color3 eta;          /* index of refraction */
+    color3 c_absorption; /* Coefficient of absorption (per meter) */
+    float roughness;     /* surface roughness [0.0, 1.0] */
     dielectric_render_method render_method;
 };
 
@@ -70,17 +71,23 @@ __device__ inline color3 scatter_dielectric_fresnel(ray3* r, const hit* h, const
     }
 
     /* Swap eta_i and eta_t if the hit came from the back face */
-    float eta_i = h->is_front_face ? 1.0f : params.ior;
-    float eta_t = h->is_front_face ? params.ior : 1.0f;
-    float refraction_ratio = eta_i / eta_t;
+    color3 eta_i = h->is_front_face ? color3{1.f,1.f,1.f} : params.eta;
+    color3 eta_t = h->is_front_face ? params.eta : color3{1.f,1.f,1.f};
+    /* uniform refraction (no chromatic aberration currently) */
+    color3 refraction_ratio_3 = elem_divide(eta_i, eta_t);
+    float refraction_ratio = (refraction_ratio_3.x + refraction_ratio_3.y + refraction_ratio_3.z) * 0.333333333f;
 
     float cos_theta_i = cos_theta_from_incident_and_normal(incident, normal);
 
-    float fresnel_reflectance = fresnel_dielectric(cos_theta_i, eta_i, eta_t);
+    color3 reflectance = color3{
+        fresnel_dielectric(cos_theta_i, eta_i.x, eta_t.x),
+        fresnel_dielectric(cos_theta_i, eta_i.y, eta_t.y),
+        fresnel_dielectric(cos_theta_i, eta_i.z, eta_t.z)
+    };
 
     /* Probabilistic reflection / refraction */
     vec3 direction;
-    if (fresnel_reflectance > xorshift32_f_norm(seed)) {
+    if (reflectance.x + reflectance.y + reflectance.z > 3 * xorshift32_f_norm(seed)) {
         direction = reflect(incident, normal);
     } else {
         direction = refract(incident, normal, refraction_ratio);
@@ -89,20 +96,30 @@ __device__ inline color3 scatter_dielectric_fresnel(ray3* r, const hit* h, const
     r->origin = h->loc;
     r->direction = normalize(direction);
 
+    /* 1 - reflectance */
+    color3 transmission = -reflectance + 1;
     /*
-     * Assumes perfect transmission / no absorption, non-dispersion of component
-     * colors / wavelength independence.
-     * TODO: Consider this, and extensions thereof such as fluorescence/phosphorescence,
-     *       subsurface scattering / subsurface interactions, etc.
+     * Lambert law of absorption:
+     * intensity_transmitted = intensity_incoming * exp(-absorption * distance)
      */
-    return params.albedo;
+    color3 absorption;
+    if (!h->is_front_face) {
+        absorption = color3{expf(-params.c_absorption.x * h->t),
+                            expf(-params.c_absorption.y * h->t),
+                            expf(-params.c_absorption.z * h->t)};
+    } else {  /* An entering ray has no absorption to be applied */
+        absorption = color3{1.f,1.f,1.f};
+    }
+
+
+    return elem_product(params.albedo, elem_product(transmission, absorption));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Schlick's approximation for reflectance
 /// @param cos_theta Cosine of incident angle.
 /// @param ior Index of refraction.
-__device__ inline float shlick_reflectance(float cos_theta, float ior) {
+__device__ inline float schlick_reflectance(float cos_theta, float ior) {
     /*
      * https://en.wikipedia.org/wiki/Schlick%27s_approximation
      *
@@ -118,6 +135,8 @@ __device__ inline float shlick_reflectance(float cos_theta, float ior) {
 /// Material-specific scatter function for a conductor material.
 /// Assumes encompassing medium has an IOR of 1.0. The IOR of a material encompassed by
 /// a medium other than air should be expressed as a ratio of material_IOR / encompassing_IOR.
+/// Uses approximations for reflectance, and absorption and eta are averaged across color
+/// channels.
 __device__ inline color3 scatter_dielectric_shlick(ray3* r, const hit* h, const dielectric_params& params, unsigned int* seed) {
     vec3 incident = r->direction;
     vec3 normal = h->normal;
@@ -128,16 +147,17 @@ __device__ inline color3 scatter_dielectric_shlick(ray3* r, const hit* h, const 
     }
 
     /* Swap eta_i and eta_t if the hit came from the back face */
-    float refraction_ratio = h->is_front_face ? (1.0f / params.ior) : params.ior;
+    float avg_eta = (params.eta.x + params.eta.y + params.eta.z) * 0.33333333f;
+    float refraction_ratio = h->is_front_face ? (1.0f / avg_eta) : avg_eta;
     float cos_theta = cos_theta_from_incident_and_normal(incident, normal);
     float sin_theta = sqrtf(fmaxf(0.0f, 1.0f - cos_theta * cos_theta));
 
     bool cannot_refract = refraction_ratio * sin_theta > 1.f;
-    float reflect_prob = shlick_reflectance(cos_theta, refraction_ratio);
+    float reflectance = schlick_reflectance(cos_theta, refraction_ratio);
 
     /* Probabilistic reflection / refraction */
     vec3 direction;
-    if (cannot_refract || reflect_prob > xorshift32_f_norm(seed)) {
+    if (cannot_refract || reflectance > xorshift32_f_norm(seed)) {
         direction = reflect(incident, normal);
     } else {
         direction = refract(incident, normal, refraction_ratio);
@@ -146,13 +166,20 @@ __device__ inline color3 scatter_dielectric_shlick(ray3* r, const hit* h, const 
     r->origin = h->loc;
     r->direction = normalize(direction);
 
+    /* 1 - reflectance */
+    float transmission = -reflectance + 1;
     /*
-     * Assumes perfect transmission / no absorption, non-dispersion of component
-     * colors / wavelength independence.
-     * TODO: Consider this, and extensions thereof such as fluorescence/phosphorescence,
-     *       subsurface scattering / subsurface interactions, etc.
+     * Lambert law of absorption:
+     * intensity_transmitted = intensity_incoming * exp(-absorption * distance)
      */
-    return params.albedo;
+    float absorption;
+    if (!h->is_front_face) {
+        absorption = expf(-((params.c_absorption.x + params.c_absorption.x + params.c_absorption.x) * 0.333333333f) * h->t);
+    } else {  /* An entering ray has no absorption to be applied */
+        absorption = 1.f;
+    }
+
+    return params.albedo * (transmission * absorption);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///

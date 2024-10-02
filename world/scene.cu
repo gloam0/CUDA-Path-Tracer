@@ -10,15 +10,16 @@ scene* create_scene() {
 
     /* ---------------------------------- Geometry ---------------------------------------*/
     /* Create spheres */
-    s->geoms_info.num_spheres = 4;
+    s->geoms_info.num_spheres = 5;
     s->geoms.spheres.centers = new point3[s->geoms_info.num_spheres] {
+        point3{0.f, 2.f, -5.f},
         point3{0.f, 2.f, -5.f},
         point3{5.f, 2.f, -5.f},
         point3{9.f, 2.f, -5.f},
         point3{0.f, 7.f, -3.f}
     };
     s->geoms.spheres.radii = new float[s->geoms_info.num_spheres] {
-        2.f, 2.f, 2.f, 3.f
+        2.f, 1.8f, 2.f, 2.f, 3.f
     };
 
     /* Create planes */
@@ -35,26 +36,31 @@ scene* create_scene() {
     s->geoms_info.instances = new geometry_instance[s->geoms_info.num_instances];
 
     s->geoms_info.instances[0] = geometry_instance{geometry_type::SPHERE, 0, 1};
-    s->geoms_info.instances[1] = geometry_instance{geometry_type::SPHERE, 1, 2};
-    s->geoms_info.instances[2] = geometry_instance{geometry_type::SPHERE, 3, 3};
-    s->geoms_info.instances[3] = geometry_instance{geometry_type::SPHERE, 2, 0};
+    s->geoms_info.instances[1] = geometry_instance{geometry_type::SPHERE, 1, 3};
+    s->geoms_info.instances[2] = geometry_instance{geometry_type::SPHERE, 2, 2};
+    s->geoms_info.instances[3] = geometry_instance{geometry_type::SPHERE, 3, 0};
+    s->geoms_info.instances[4] = geometry_instance{geometry_type::SPHERE, 4, 4};
 
-    s->geoms_info.instances[4] = geometry_instance{geometry_type::PLANE, 0, 0};
-
+    s->geoms_info.instances[5] = geometry_instance{geometry_type::PLANE, 0, 0};
 
     /* ---------------------------------- Material ---------------------------------------*/
-
     /* Create diffuse */
     s->mats_info.num_diffuse = 1;
     s->mats.diffuses = new diffuse_params[s->mats_info.num_diffuse] {
-        color3{0.2f, 0.4f, 0.9f}
+        color3{0.2f, 0.2f, 0.2f}
     };
 
     /* Create dielectrics */
-    s->mats_info.num_dielectrics = 2;
+    s->mats_info.num_dielectrics = 3;
     s->mats.dielectrics = new dielectric_params[s->mats_info.num_dielectrics] {
         predefined_materials::GLASS_BK7(),
-        predefined_materials::GLASS_BK7({1.f,1.f,1.f}, 0.2f)
+        predefined_materials::GLASS_BK7({1.f,1.f,1.f}, 0.2f),
+        dielectric_params{color3{1.f,1.f,1.f},
+            color3{1.f / 1.5158f, 1.f / 1.5186f, 1.f / 1.5240f},
+            color3{0.f, 0.f, 0.f},
+            0.0f,
+            dielectric_render_method::FRESNEL
+        }
     };
 
     /* Create conductors */
@@ -71,8 +77,9 @@ scene* create_scene() {
 
     s->mats_info.instances[1] = material_instance{material_type::DIELECTRIC, 0};
     s->mats_info.instances[2] = material_instance{material_type::DIELECTRIC, 1};
+    s->mats_info.instances[3] = material_instance{material_type::DIELECTRIC, 2};
 
-    s->mats_info.instances[3] = material_instance{material_type::CONDUCTOR, 0};
+    s->mats_info.instances[4] = material_instance{material_type::CONDUCTOR, 0};
 
     return s;
 }
