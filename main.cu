@@ -48,11 +48,12 @@ int main() {
     GLFWwindow* main_window = nullptr;
     initialize_GLFW(&main_window);
     initialize_OpenGL();
+    initialize_ImGui(main_window);
 
     /* Initialize pixel buffer object and texture */
-    GLuint pbo, tex;
+    GLuint gl_pbo, gl_tex;
     cudaGraphicsResource* pbo_resource;
-    get_pbo_tex(&pbo, &tex, &pbo_resource);
+    get_pbo_tex(&gl_pbo, &gl_tex, &pbo_resource);
 
     /* Pre-generate randoms */
     init_d_randoms();
@@ -93,13 +94,15 @@ int main() {
     // Render
     int frame_count = 0;
     int render_mode_frame_count = 1;
+    double fps = 0.;
     timer.start_fps();
 
     while (!glfwWindowShouldClose(main_window)) {
-        render_frame(d_scene, pbo_resource, map.tex_obj, render_mode_frame_count);
+        render_frame(d_scene, pbo_resource, map.tex_obj, fps, render_mode_frame_count, gl_pbo);
 
+        fps = timer.get_current_fps();
         if (frame_count % 400 == 0) {
-            logger << Logger::get_local_time() << " FPS: " << timer.get_current_fps() << std::endl;
+            logger << Logger::get_local_time() << " FPS: " << fps << std::endl;
         }
 
         double frame_time = timer.get_frame_time();
@@ -120,7 +123,7 @@ int main() {
     ////////////////////////////////////////////////////////////////////////////////////////
     // Clean up
     if (pbo_resource) cudaGraphicsUnregisterResource(pbo_resource);
-    if (pbo) glDeleteBuffers(1, &pbo);
+    if (gl_pbo) glDeleteBuffers(1, &gl_pbo);
     if (main_window) {
         glfwDestroyWindow(main_window);
         glfwTerminate();

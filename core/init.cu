@@ -1,13 +1,15 @@
 #include "init.cuh"
 
-#include <common.cuh>
 #include <iostream>
 
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl2.h>
 #include <cuda_gl_interop.h>
 #include <curand_kernel.h>
 #include <cuda_runtime.h>
 
-#include "common.hpp"
+#include "common.cuh"
 #include "cuda_utils.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,6 +49,22 @@ void initialize_OpenGL() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+void initialize_ImGui(GLFWwindow* window) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGui::StyleColorsDark();
+
+    if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
+        std::cerr << "ImGui_ImplGlfw_InitForOpenGL() failed" << std::endl;
+        exit(-1);
+    }
+    if (!ImGui_ImplOpenGL2_Init()) {
+        std::cerr << "ImGui_ImplOpenGL2_Init() failed" << std::endl;
+        exit(-1);
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void get_pbo_tex(GLuint* pbo, GLuint* tex, cudaGraphicsResource** cuda_pbo) {

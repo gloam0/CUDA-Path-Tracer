@@ -1,7 +1,9 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include <GL/glew.h>
 #include <cuda_runtime.h>
+#include <GLFW/glfw3.h>
 
 #include "scene.hpp"
 #include "exr_utils.cuh"
@@ -13,8 +15,9 @@ __global__ void init_curand(curandState *curand_state, unsigned long long seed);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Render a frame in the CUDA-OpenGL-GLFW pipeline
 void render_frame(scene* d_scene, cudaGraphicsResource* pbo_resource,
-    cudaTextureObject_t env_tex, int render_mode_frame_count);
+    cudaTextureObject_t env_tex, double fps, int render_mode_frame_count, GLuint gl_pbo);
 
+void render_messagebar(GLuint prev_buffer, const char* message);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Displays all border pixels as white, else black. Used for testing image-window alignment.
 __global__ void check_borders(uchar4* out);

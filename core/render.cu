@@ -3,6 +3,10 @@
 #include <cuda_gl_interop.h>
 #include <GLFW/glfw3.h>
 
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl2.h>
+
 #include "common.hpp"
 #include "cuda_utils.cuh"
 #include "input.hpp"
@@ -26,7 +30,9 @@ void render_frame(
         scene* d_scene,
         cudaGraphicsResource* pbo_resource,
         cudaTextureObject_t env_tex,
-        int render_mode_frame_count)
+        double fps,
+        int render_mode_frame_count,
+        GLuint gl_pbo)
 {
     static int img_count = 0;
 
@@ -64,11 +70,47 @@ void render_frame(
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    /* Update and render messagebar */
+    char m[64];
+    snprintf(m, sizeof(m), "FPS:%5d    Frames:%6d", (int)fps, render_mode_frame_count);
+    render_messagebar(gl_pbo, m);
+
     /* Swap back/front buffers, handled by GLFW */
     glfwSwapBuffers(glfwGetCurrentContext());
 
     /* Handle events that occurred this frame (see callbacks in input.h) */
     glfwPollEvents();
+}
+
+void render_messagebar(GLuint prev_buffer, const char* message) {
+    /* Unbind the PBO to prevent it from affecting ImGui's rendering */
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    /* Start imgui frame*/
+    ImGui_ImplOpenGL2_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    /* Define message bar */
+    float barHeight = 32.0f; // Adjust as needed
+    ImGui::SetNextWindowPos(ImVec2(0, img::h - barHeight));
+    ImGui::SetNextWindowSize(ImVec2(16.f * 13, (float)barHeight));
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    /* Create message bar and render*/
+    ImGui::Begin("messagebar", nullptr, window_flags);
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 1.f, 1.f, 1.f));
+    ImGui::Text(message);
+    ImGui::PopStyleColor();
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
+    /* Rebind the previous buffer */
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, prev_buffer);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __global__ void check_borders(uchar4 *out) {
