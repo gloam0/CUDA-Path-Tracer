@@ -10,7 +10,11 @@ struct CameraParams {
     point3 c_location;          /* Camera location */
     vec3 c_direction;           /* Camera 'look at' vector */
     quaternion c_orientation;   /* Quaternion describing camera's orientation */
-    double focal_length;        /* Length from camera center to viewport */
+    double c_focal_length;      /* Length from camera center to viewport */
+
+    float c_aperture_diameter;  /* Aperture size; f-number is focal length / aperture diameter */
+    float c_focus_distance;     /* Distance to point of 'perfect focus' */
+    vec3 c_focal_plane_center;  /* Vector to center of focal plane */
 
     float c_yaw;                /* Camera yaw */
     float c_pitch;              /* Camera pitch */
@@ -28,10 +32,18 @@ struct CameraParams {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 __device__ __constant__ inline CameraParams d_camera_params;
 ////////////////////////////////////////////////////////////////////////////////////////////////
-/// Cast a ray from the camera's location through the viewport at (vp_i, vp_j).
+/// Cast a ray from the camera's location through the viewport at (vp_i, vp_j) using
+/// a pinhole camera model.
 /// @param vp_i Rightward distance from viewport center.
 /// @param vp_j Downward distance from viewport center.
-__device__ ray3 make_ray(float vp_i, float vp_j);
+__device__ ray3 make_ray_pinhole(float vp_i, float vp_j);
+
+/// Cast a ray from the camera's location through the viewport at (vp_i, vp_j) using
+/// a thin lens camera model.
+/// @param vp_i Rightward distance from viewport center.
+/// @param vp_j Downward distance from viewport center.
+/// @param seed Random seec.
+__device__ ray3 make_ray_thin_lens(float vp_i, float vp_j, unsigned int* seed);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 class Camera {
 private:

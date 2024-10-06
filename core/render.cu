@@ -195,7 +195,8 @@ __device__ color3 trace_ray(
         cudaTextureObject_t env_tex,
         unsigned int* seed)
 {
-    ray3 r = make_ray(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */
+    //ray3 r = make_ray_pinhole(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */
+    ray3 r = make_ray_thin_lens(vp_x, vp_y, seed);
     color3 curr_attenuation = color3{1.f,1.f,1.f};   /* Attenuation */
 
     hit best_hit;

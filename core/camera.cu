@@ -6,14 +6,41 @@
 #include "cuda_utils.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-__device__ ray3 make_ray(float vp_i, float vp_j) {
+__device__ ray3 make_ray_pinhole(float vp_i, float vp_j) {
     vec3 vp_point = d_camera_params.vp_start + vp_i * d_camera_params.vp_delta_px_w
                                              + vp_j * d_camera_params.vp_delta_px_h;
+
     vec3 direction = normalize(vp_point - d_camera_params.c_location);
-    return ray3{
-        d_camera_params.c_location,
-        direction
-    };
+
+    return ray3{d_camera_params.c_location, direction};
+}
+
+__device__ ray3 make_ray_thin_lens(float vp_i, float vp_j, unsigned int* seed) {
+    /*
+     * A thin lens camera characterized by a circular aperture centered
+     * at camera center, and the focal plane as the viewport.
+     */
+    vec3 vp_point = d_camera_params.vp_start + vp_i * d_camera_params.vp_delta_px_w
+                                             + vp_j * d_camera_params.vp_delta_px_h;
+    /*
+     * Radial sampling / uniform disk sampling
+     * r = sqrt(random) * (aperture_diameter / 2)
+     *
+     * Angular sampling
+     * theta = random * 2pi
+     */
+    float r = sqrtf(xorshift32_f_norm(seed)) * d_camera_params.c_aperture_diameter * 0.5f;
+    float theta = xorshift32_f_norm(seed) * 2.f * M_PIf;
+    vec3 aperture_pt = d_camera_params.c_location +
+        (cos(theta) * r) * normalize(d_camera_params.vp_delta_px_w) +
+        (sin(theta) * r) * normalize(d_camera_params.vp_delta_px_h);
+
+    vec3 focal_direction = normalize(vp_point - d_camera_params.c_location);
+    vec3 focal_pt = d_camera_params.c_location + focal_direction * d_camera_params.c_focus_distance;
+
+    vec3 direction = normalize(focal_pt - aperture_pt);
+
+    return ray3{aperture_pt, direction};
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::init() {
@@ -28,13 +55,19 @@ void Camera::init() {
 
     h_camera_params.c_orientation = quaternion{1.f, 0.f, 0.f, 0.f};
 
-    h_camera_params.focal_length = view::init_focal_length;
+    h_camera_params.c_focal_length = view::init_focal_length;
+
+    h_camera_params.c_aperture_diameter = view::init_aperture_diameter;
+    h_camera_params.c_focus_distance = view::init_focus_distance;
 
     update();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void Camera::update() {
     if (!h_input_state.free_mode) return;
+
+    h_camera_params.c_focal_plane_center = h_camera_params.c_location +
+        h_camera_params.c_direction * h_camera_params.c_focus_distance;
 
     vec3 c_direction = rotate_v(view::init_camera_dir, h_camera_params.c_orientation);
     vec3 c_up = rotate_v(normalize(view::init_camera_up), h_camera_params.c_orientation);
@@ -50,7 +83,7 @@ void Camera::update() {
 
     h_camera_params.vp_start =
         h_camera_params.c_location                                              /* camera loc */
-      + h_camera_params.focal_length * h_camera_params.c_direction              /* vector from camera to vp center */
+      + h_camera_params.c_focal_length * h_camera_params.c_direction            /* vector from camera to vp center */
       - 0.5 * (h_camera_params.vp_w_vec + h_camera_params.vp_h_vec)             /* center to top left vp */
       + 0.5 * (h_camera_params.vp_delta_px_w + h_camera_params.vp_delta_px_h);  /* to px center (1/2 px dimensions) */
 
@@ -107,8 +140,8 @@ void Camera::frame_now(double frame_time) {
 void Camera::scroll_zoom(float d_focal_length) {
     if (!h_input_state.free_mode) return;
 
-    h_camera_params.focal_length += d_focal_length;
-    h_camera_params.focal_length = clamp(h_camera_params.focal_length,
+    h_camera_params.c_focal_length += d_focal_length;
+    h_camera_params.c_focal_length = clamp(h_camera_params.c_focal_length,
                                          view::min_focal_length,
                                          view::max_focal_length);
 }

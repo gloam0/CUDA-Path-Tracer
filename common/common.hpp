@@ -1,6 +1,16 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#if defined(__CUDACC__) // NVCC
+   #define ALIGN(n) __align__(n)
+#elif defined(__GNUC__) // GCC
+  #define ALIGN(n) __attribute__((aligned(n)))
+#elif defined(_MSC_VER) // MSVC
+  #define ALIGN(n) __declspec(align(n))
+#else
+  #error "ALIGN macro (common.hpp): not defined for host compiler."
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Type aliases and primitives
 using color3 = float3;
@@ -24,7 +34,7 @@ inline input_state h_input_state;
 // Image/frame constants
 namespace img {
     /* configurable */
-    constexpr int       w =             1600;
+    constexpr int       w =             2200;
     constexpr double    desired_ar =    16. / 9.;
 
     /* derived */
@@ -38,7 +48,9 @@ namespace view {
     /* configurable */
     constexpr double    h =                     2.;
     constexpr double    init_focal_length =     1.;
-    constexpr point3    init_camera_loc =       vec3{0, 0, 0};
+    constexpr double    init_aperture_diameter= 0.1;
+    constexpr double    init_focus_distance =   8.;
+    constexpr point3    init_camera_loc =       vec3{0, 1, 0};
     constexpr vec3      init_camera_dir =       vec3{0, 0, -1}; /* these vecs should be normalized */
     constexpr vec3      init_camera_up =        vec3{0, 1, 0};
     constexpr vec3      init_camera_right =     vec3{1, 0, 0};
@@ -64,11 +76,11 @@ namespace render {
     /* configurable */
     constexpr int       max_scatter_depth =     30;
     constexpr int       vsync =                 0;
-    constexpr float     self_intersect_eps =    1e-4;
+    constexpr float     eps =                   1e-4;
     inline    bool      use_hdr =               true;
 
     /* derived */
-    constexpr float     self_intersect_eps_sq = self_intersect_eps * self_intersect_eps;
+    constexpr float     eps_sq = eps * eps;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
