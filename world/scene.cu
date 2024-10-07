@@ -10,16 +10,17 @@ scene* create_scene() {
 
     /* ---------------------------------- Geometry ---------------------------------------*/
     /* Create spheres */
-    s->geoms_info.num_spheres = 5;
+    s->geoms_info.num_spheres = 6;
     s->geoms.spheres.centers = new point3[s->geoms_info.num_spheres] {
-        point3{0.f, 2.f, -5.f},
-        point3{0.f, 2.f, -5.f},
-        point3{5.f, 2.f, -5.f},
-        point3{9.f, 2.f, -5.f},
-        point3{0.f, 7.f, -3.f}
+        point3{0.f, 1.f, -5.f},
+        point3{0.f, 1.f, -5.f},
+        point3{2.5f, 1.f, -5.f},
+        point3{5.f, 1.f, -5.f},
+        point3{0.f, 4.f, -7.f},
+        point3{0.f, 5.f, 25.f}
     };
     s->geoms.spheres.radii = new float[s->geoms_info.num_spheres] {
-        2.f, 1.8f, 2.f, 2.f, 3.f
+        1.f, 0.9f, 1.f, 1.f, 1.5f, 5.f
     };
 
     /* Create planes */
@@ -28,7 +29,7 @@ scene* create_scene() {
         vec3{0.f, 1.f, 0.f}
     };
     s->geoms.planes.dists = new float[s->geoms_info.num_planes] {
-        1.f
+        0.01f
     };
 
     /* Populate geometry instances array */
@@ -37,17 +38,19 @@ scene* create_scene() {
 
     s->geoms_info.instances[0] = geometry_instance{geometry_type::SPHERE, 0, 1};
     s->geoms_info.instances[1] = geometry_instance{geometry_type::SPHERE, 1, 3};
-    s->geoms_info.instances[2] = geometry_instance{geometry_type::SPHERE, 2, 2};
-    s->geoms_info.instances[3] = geometry_instance{geometry_type::SPHERE, 3, 0};
+    s->geoms_info.instances[2] = geometry_instance{geometry_type::SPHERE, 2, 0};
+    s->geoms_info.instances[3] = geometry_instance{geometry_type::SPHERE, 3, 5};
     s->geoms_info.instances[4] = geometry_instance{geometry_type::SPHERE, 4, 4};
+    s->geoms_info.instances[5] = geometry_instance{geometry_type::SPHERE, 5, 2};
 
-    s->geoms_info.instances[5] = geometry_instance{geometry_type::PLANE, 0, 0};
+    s->geoms_info.instances[6] = geometry_instance{geometry_type::PLANE, 0, 0};
 
     /* ---------------------------------- Material ---------------------------------------*/
     /* Create diffuse */
-    s->mats_info.num_diffuse = 1;
+    s->mats_info.num_diffuse = 2;
     s->mats.diffuses = new diffuse_params[s->mats_info.num_diffuse] {
-        color3{0.2f, 0.2f, 0.2f}
+        color3{0.7f, 0.7f, 0.7f}, .01f,
+        color3{0.7f, 0.7f, 0.7f}, .9f
     };
 
     /* Create dielectrics */
@@ -66,7 +69,7 @@ scene* create_scene() {
     /* Create conductors */
     s->mats_info.num_conductors = 1;
     s->mats.conductors = new conductor_params[s->mats_info.num_conductors] {
-        predefined_materials::GOLD()
+        predefined_materials::ALUMINUM()
     };
 
     /* Populate material instances array */
@@ -80,6 +83,9 @@ scene* create_scene() {
     s->mats_info.instances[3] = material_instance{material_type::DIELECTRIC, 2};
 
     s->mats_info.instances[4] = material_instance{material_type::CONDUCTOR, 0};
+
+    s->mats_info.instances[5] = material_instance{material_type::DIFFUSE, 1};
+
 
     return s;
 }

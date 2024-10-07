@@ -33,16 +33,14 @@ __device__ inline bool is_hit_plane(const ray3& ray, hit& hit_info, const vec3& 
      * => t = -(normal . O + dist) / (normal . D); where normal . D != 0
      */
     float den = dot(normal, ray.direction);
-    if (fabs(den) < render::self_intersect_eps) return false;
+    if (fabs(den) < render::eps) return false;
 
     float num = -(dot(normal, ray.origin) + dist);
     float t = num / den;
-    if (t < render::self_intersect_eps) return false;
-
-    point3 intersect = ray.origin + t * ray.direction;
+    if (t < render::eps) return false;
 
     hit_info.t = t;
-    hit_info.loc = intersect;
+    hit_info.loc = ray.origin + t * ray.direction;
 
     /* Treat both sides of the plane as outward / front faces */
     hit_info.normal = den > 0 ? -normal : normal;

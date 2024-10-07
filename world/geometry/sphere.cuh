@@ -52,8 +52,8 @@ __device__ inline bool is_hit_sphere(const ray3& ray, hit& hit_info, const point
         t1 = tmp;
     }
     /* avoid negative or near-zero results */
-    if (t0 < render::self_intersect_eps) {
-        if (t1 > render::self_intersect_eps) {
+    if (t0 < render::eps) {
+        if (t1 > render::eps) {
             t0 = t1;
         } else {
             return false;

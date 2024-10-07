@@ -76,7 +76,7 @@ namespace render {
     /* configurable */
     constexpr int       max_scatter_depth =     30;
     constexpr int       vsync =                 0;
-    constexpr float     eps =                   1e-4;
+    constexpr float     eps =                   1e-3;
     inline    bool      use_hdr =               true;
 
     /* derived */

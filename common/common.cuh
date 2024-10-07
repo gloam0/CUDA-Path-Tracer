@@ -12,7 +12,7 @@ __device__ inline input_state d_input_state;            /* state items related t
 __device__ inline bool d_use_hdr;
 
 namespace render {
-    __device__ constexpr color3 background_color = color3{0.7f, 0.9f, 1.f};
+    __device__ constexpr color3 background_color = color3{0.5f, 0.75f, 1.f};
 }
 
 #endif //CONFIG_CUH

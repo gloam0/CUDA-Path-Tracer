@@ -6,11 +6,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// Relative paths to EXR files
 namespace exr_paths {
-    inline const char* day_sky_1 = "../exr/assets/DaySkyHDRI008B_8K-HDR.exr";
-    inline const char* day_sky_2 = "../exr/assets/DaySkyHDRI027B_8K-HDR.exr";
-    inline const char* indoor_1  = "../exr/assets/IndoorEnvironmentHDRI005_8K-HDR.exr";
-    inline const char* night_1   = "../exr/assets/NightEnvironmentHDRI002_8K-HDR.exr";
-    inline const char* night_2   = "../exr/assets/NightEnvironmentHDRI008_8K-HDR.exr";
+    inline const char* day_sky_1 = "../exr/assets/DaySkyHDRI008B_4K-HDR.exr";
+    inline const char* day_sky_2 = "../exr/assets/DaySkyHDRI027B_4K-HDR.exr";
+    inline const char* indoor_1  = "../exr/assets/IndoorEnvironmentHDRI005_4K-HDR.exr";
+    inline const char* night_1   = "../exr/assets/NightEnvironmentHDRI002_4K-HDR.exr";
+    inline const char* night_2   = "../exr/assets/NightEnvironmentHDRI008_4K-HDR.exr";
 };
 
 /// Represent

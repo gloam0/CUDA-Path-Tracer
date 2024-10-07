@@ -70,7 +70,7 @@ __device__ inline color3 scatter_conductor(ray3* r, const hit* h, const conducto
     r->origin = h->loc;
     r->direction = reflected;
 
-    float cos_theta =  cos_theta_from_incident_and_normal(incident, normal);
+    float cos_theta =  cos_theta_inner(-incident, normal);
 
     /* Return fresnel reflectance as attenuation */
     return elem_product(params.albedo, fresnel_conductor(cos_theta, params.eta, params.kappa));

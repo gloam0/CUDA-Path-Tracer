@@ -22,7 +22,7 @@ namespace predefined_materials {
     /* Magnozzi et al. 2019 via refractiveindex.info */
     constexpr auto GOLD = [](
         color3 albedo = {1.f,1.f,1.f},
-        float roughness = 0.05f
+        float roughness = 0.35f
     ) -> conductor_params {
         return conductor_params{
             .albedo = albedo,
@@ -35,7 +35,7 @@ namespace predefined_materials {
     /* Cheng et al. 2016 via refractiveindex.info */
     constexpr auto ALUMINUM = [](
             color3 albedo = {1.f,1.f,1.f},
-            float roughness = 0.05f
+            float roughness = 0.55f
         ) -> conductor_params {
             return conductor_params{
                 .albedo = albedo,

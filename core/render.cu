@@ -195,8 +195,8 @@ __device__ color3 trace_ray(
         cudaTextureObject_t env_tex,
         unsigned int* seed)
 {
-    //ray3 r = make_ray_pinhole(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */
-    ray3 r = make_ray_thin_lens(vp_x, vp_y, seed);
+    ray3 r = make_ray_pinhole(vp_x, vp_y);      /* Get ray through (vp_x, vp_y) */
+    //ray3 r = make_ray_thin_lens(vp_x, vp_y, seed);
     color3 curr_attenuation = color3{1.f,1.f,1.f};   /* Attenuation */
 
     hit best_hit;
@@ -241,7 +241,8 @@ __device__ color3 trace_ray(
             return elem_product(curr_attenuation, env_color);
         }
         depth++;
-    } while (depth < render::max_scatter_depth);
+    } while (depth < render::max_scatter_depth
+        && (curr_attenuation.x > 0 || curr_attenuation.y > 0 || curr_attenuation.z > 0));
 
     return curr_attenuation;
 }

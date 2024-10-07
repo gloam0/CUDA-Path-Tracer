@@ -77,7 +77,7 @@ __device__ inline color3 scatter_dielectric_fresnel(ray3* r, const hit* h, const
     color3 refraction_ratio_3 = elem_divide(eta_i, eta_t);
     float refraction_ratio = (refraction_ratio_3.x + refraction_ratio_3.y + refraction_ratio_3.z) * 0.333333333f;
 
-    float cos_theta_i = cos_theta_from_incident_and_normal(incident, normal);
+    float cos_theta_i = cos_theta_inner(-incident, normal);
 
     color3 reflectance = color3{
         fresnel_dielectric(cos_theta_i, eta_i.x, eta_t.x),
@@ -149,7 +149,7 @@ __device__ inline color3 scatter_dielectric_shlick(ray3* r, const hit* h, const 
     /* Swap eta_i and eta_t if the hit came from the back face */
     float avg_eta = (params.eta.x + params.eta.y + params.eta.z) * 0.33333333f;
     float refraction_ratio = h->is_front_face ? (1.0f / avg_eta) : avg_eta;
-    float cos_theta = cos_theta_from_incident_and_normal(incident, normal);
+    float cos_theta = cos_theta_inner(-incident, normal);
     float sin_theta = sqrtf(fmaxf(0.0f, 1.0f - cos_theta * cos_theta));
 
     bool cannot_refract = refraction_ratio * sin_theta > 1.f;
