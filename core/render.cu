@@ -240,9 +240,13 @@ __device__ color3 trace_ray(
             /* Return the sampled environment color scaled by current attenuation */
             return elem_product(curr_attenuation, env_color);
         }
+        if (!isfinite(curr_attenuation.x) || !isfinite(curr_attenuation.y) || !isfinite(curr_attenuation.z)
+            || curr_attenuation.x < 0.0f || curr_attenuation.y < 0.0f || curr_attenuation.z < 0.0f) {
+            curr_attenuation = make_float3(0.0f, 0.0f, 0.0f);
+            break;
+        }
         depth++;
-    } while (depth < render::max_scatter_depth
-        && (curr_attenuation.x > 0 || curr_attenuation.y > 0 || curr_attenuation.z > 0));
+    } while (depth < render::max_scatter_depth);
 
     return curr_attenuation;
 }
