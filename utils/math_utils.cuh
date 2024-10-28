@@ -373,7 +373,7 @@ __device__ inline float cos_theta_inner(const vec3& incident, const vec3& normal
 __device__ inline float cos_phi_diff_from_system(const vec3& incident, const vec3& normal, const vec3& scattered) {
     vec3 incident_proj = normalize(-incident - cos_theta_inner(-incident, normal) * normal);
     vec3 scattered_proj = normalize(scattered - cos_theta_inner(scattered, normal) * normal);
-    return dot(incident_proj, scattered_proj), -1.f, 1.f;
+    return clamp(dot(incident_proj, scattered_proj), -1.f, 1.f);
 }
 
 /// Return the reflection of vector v about normal n.
