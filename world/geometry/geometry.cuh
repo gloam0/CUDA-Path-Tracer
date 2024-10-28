@@ -3,12 +3,14 @@
 
 #include "sphere.cuh"
 #include "plane.cuh"
+#include "triangle.cuh"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /// All available geometry types
 enum class geometry_type {
     SPHERE,
-    PLANE
+    PLANE,
+    TRIANGLE
 };
 
 /// Describes an entry in a unified array referencing various geometry types
@@ -23,6 +25,7 @@ struct geometries_info {
     geometry_instance* instances;  /* unified array referencing various geometry types */
     int num_spheres;
     int num_planes;
+    int num_triangles;
     int num_instances;
 };
 
@@ -30,6 +33,7 @@ struct geometries_info {
 struct geometries {
     sphere_params_soa spheres;
     plane_params_soa planes;
+    triangle_params_soa triangles;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +54,8 @@ __device__ inline bool is_hit_dispatch(
             return is_hit_sphere(ray, hit_info, geoms.spheres.centers[g.i], geoms.spheres.radii[g.i]);
         case geometry_type::PLANE:
             return is_hit_plane(ray, hit_info, geoms.planes.normals[g.i], geoms.planes.dists[g.i]);
+        case geometry_type::TRIANGLE:
+            return is_hit_triangle(ray, hit_info, geoms.triangles.vertices[g.i]);
         default:
             return false;
     }

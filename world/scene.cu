@@ -32,8 +32,15 @@ scene* create_scene() {
         0.01f
     };
 
+    /* Create triangles */
+    s->geoms_info.num_triangles = 2;
+    s->geoms.triangles.vertices = new triangle_vertices[s->geoms_info.num_triangles] {
+        triangle_vertices{point3{-2.f, 0.f, 1.f}, point3{-5.f, 2.f, 1.2f}, point3{-3.f, 1.f, 1.4f}},
+        triangle_vertices{point3{0.f, 6.f, 1.f}, point3{-4.f, 1.f, 2.f}, point3{-2.f, 2.f, 4.f}}
+    };
+
     /* Populate geometry instances array */
-    s->geoms_info.num_instances = s->geoms_info.num_spheres + s->geoms_info.num_planes;
+    s->geoms_info.num_instances = s->geoms_info.num_spheres + s->geoms_info.num_planes + s->geoms_info.num_triangles;
     s->geoms_info.instances = new geometry_instance[s->geoms_info.num_instances];
 
     s->geoms_info.instances[0] = geometry_instance{geometry_type::SPHERE, 0, 1};
@@ -44,6 +51,9 @@ scene* create_scene() {
     s->geoms_info.instances[5] = geometry_instance{geometry_type::SPHERE, 5, 2};
 
     s->geoms_info.instances[6] = geometry_instance{geometry_type::PLANE, 0, 0};
+
+    s->geoms_info.instances[7] = geometry_instance{geometry_type::TRIANGLE, 0, 0};
+    s->geoms_info.instances[8] = geometry_instance{geometry_type::TRIANGLE, 1, 0};
 
     /* ---------------------------------- Material ---------------------------------------*/
     /* Create diffuse */
@@ -86,7 +96,6 @@ scene* create_scene() {
 
     s->mats_info.instances[5] = material_instance{material_type::DIFFUSE, 1};
 
-
     return s;
 }
 
@@ -96,6 +105,7 @@ void free_scene(scene* h_scene) {
     delete[] h_scene->geoms.planes.dists;
     delete[] h_scene->geoms.spheres.centers;
     delete[] h_scene->geoms.spheres.radii;
+    delete[] h_scene->geoms.triangles.vertices;
     delete[] h_scene->geoms_info.instances;
 
     delete[] h_scene->mats.diffuses;
@@ -149,6 +159,19 @@ scene* copy_scene_to_device(scene* h_scene) {
     } else {
         d_plane_soa.normals = nullptr;
         d_plane_soa.dists = nullptr;
+    }
+
+    /* Allocate and copy triangles */
+    triangle_params_soa h_triangle_soa = h_scene->geoms.triangles;
+    triangle_params_soa d_triangle_soa;
+
+    if (h_scene->geoms_info.num_triangles > 0) {
+        CHECK_ERR(cudaMalloc(&d_triangle_soa.vertices, sizeof(triangle_vertices) * h_scene->geoms_info.num_triangles));
+        CHECK_ERR(cudaMemcpy(d_triangle_soa.vertices, h_triangle_soa.vertices,
+                            sizeof(triangle_vertices) * h_scene->geoms_info.num_triangles,
+                            cudaMemcpyHostToDevice));
+    } else {
+        d_triangle_soa.vertices = nullptr;
     }
 
     /* Allocate and copy unified geometry instances array */
@@ -207,12 +230,14 @@ scene* copy_scene_to_device(scene* h_scene) {
     d_geoms.spheres.radii = d_sphere_soa.radii;
     d_geoms.planes.normals = d_plane_soa.normals;
     d_geoms.planes.dists = d_plane_soa.dists;
+    d_geoms.triangles.vertices = d_triangle_soa.vertices;
 
     /* Assembly device geometries_info struct */
     geometries_info d_geoms_info;
     d_geoms_info.instances = d_instances;
     d_geoms_info.num_spheres = h_scene->geoms_info.num_spheres;
     d_geoms_info.num_planes = h_scene->geoms_info.num_planes;
+    d_geoms_info.num_triangles = h_scene->geoms_info.num_triangles;
     d_geoms_info.num_instances = h_scene->geoms_info.num_instances;
 
     /* Assemble device materials struct */
